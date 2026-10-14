@@ -24,12 +24,19 @@ async function enterGame(){
 }
 document.querySelector('#play')!.addEventListener('click',()=>{void enterGame();});
 document.addEventListener('fullscreenchange',()=>{if(document.fullscreenElement){const orientation=screen.orientation as ScreenOrientation & {lock?:(orientation:string)=>Promise<void>};void orientation?.lock?.('landscape').catch(()=>{});}});
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x8bc9e5);scene.fog=new THREE.Fog(0x8bc9e5,600,1200);
+const scene=new THREE.Scene();scene.background=null;scene.fog=new THREE.Fog(0x8bc9e5,600,1200);
 const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.5,1500);
-const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});
+const renderer=new THREE.WebGLRenderer({antialias:false,alpha:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.3));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.35;root.prepend(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xd7f5ff,0x4b7894,2.5));const sun=new THREE.DirectionalLight(0xffe5b1,3);sun.position.set(-100,180,-160);scene.add(sun);
-const ocean=new Ocean();scene.add(ocean.mesh);const islands=new Islands();scene.add(islands.group);
+const ocean=new Ocean();
+const waterCanvas=document.createElement('canvas');waterCanvas.id='webgl-ocean';root.prepend(waterCanvas);
+let tqOcean:any=null;
+void import(/* @vite-ignore */ '/Fragatas/tq-renderer/LegacyOceanWebGLRenderer.mjs').then(async module=>{
+ tqOcean=new module.OceanWebGLRenderer(waterCanvas);
+ const ready=await tqOcean.init('/Fragatas/assets/ocean/tile.webp');
+ if(!ready){tqOcean=null;scene.add(ocean.mesh);}
+}).catch(error=>{console.error('[Fragatas] TQ WebGL2 ocean:',error);scene.add(ocean.mesh);});const islands=new Islands();scene.add(islands.group);
 const ship=new Ship();scene.add(ship.group);ship.group.position.set(0,0,35);const playerVisual=new SpriteVisual(ship.group);
 const toast=document.querySelector<HTMLElement>('#toast')!;let toastTimer=0;function announce(message:string){toast.textContent=message;toast.classList.add('show');toastTimer=3;}
 const combat=new Combat(scene,()=>{document.querySelector('#kills')!.textContent=String(combat.kills);announce(combat.kills===3?'🏆 Vitória! Os mares estão livres!':'🎯 Corsário derrotado!');if(combat.kills===3)document.querySelector('#mission')!.innerHTML='MISSÃO CONCLUÍDA <b>🏆 Vitória naval!</b>';});
@@ -51,7 +58,7 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
 const t=keys.has('w')||keys.has('arrowup')?1:keys.has('s')||keys.has('arrowdown')?-1:throttle;
 const s=keys.has('a')||keys.has('arrowleft')?-1:keys.has('d')||keys.has('arrowright')?1:steer;
 ship.update(dt,t,s,time);for(let i=0;i<enemies.length;i++){const enemy=enemies[i];if(!enemy.group.visible)continue;enemy.update(dt,.22,Math.sin(time*.25+i)*.25,time+i);}
-ocean.update(time,ship.group.position);combat.update(dt);for(const {vessel,shadow} of contactShadows){shadow.visible=vessel.group.visible;shadow.position.x=vessel.group.position.x;shadow.position.z=vessel.group.position.z;shadow.rotation.z=-vessel.heading;}
+ocean.update(time,ship.group.position);if(tqOcean){const dx=camera.position.x-ship.group.position.x,dz=camera.position.z-ship.group.position.z,dy=camera.position.y;const distance=Math.hypot(dx,dz,dy);tqOcean.perspective={enabled:true,yaw:Math.atan2(-dx,dz),pitch:Math.atan2(dy,Math.hypot(dx,dz)),distance};tqOcean.render({time:time*1000,camera:{x:ship.group.position.x,y:ship.group.position.z},zoom:1,ocean:{tileSize:590,speed:28,swell:35,brightness:100,saturation:110,contrast:105,distortion:18,waveMix:36,foamMix:24,sparkleIntensity:15},width:innerWidth,height:innerHeight});}combat.update(dt);for(const {vessel,shadow} of contactShadows){shadow.visible=vessel.group.visible;shadow.position.x=vessel.group.position.x;shadow.position.z=vessel.group.position.z;shadow.rotation.z=-vessel.heading;}
 forward.set(-Math.sin(ship.heading),0,-Math.cos(ship.heading));behind.set(0,70,70).applyAxisAngle(new THREE.Vector3(0,1,0),ship.heading);desired.copy(ship.group.position).add(behind);camera.position.lerp(desired,1-Math.exp(-2.7*dt));camera.lookAt(ship.group.position.x+forward.x*8,0,ship.group.position.z+forward.z*8);
 const bearing=(v:THREE.Vector3)=>Math.atan2(camera.position.x-v.x,camera.position.z-v.z);
 playerVisual.update(ship.heading,bearing(ship.group.position));
