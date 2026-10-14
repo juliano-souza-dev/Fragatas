@@ -26,7 +26,7 @@ async function enterGame(){
 document.querySelector('#play')!.addEventListener('click',()=>{void enterGame();});
 document.addEventListener('fullscreenchange',()=>{if(document.fullscreenElement){const orientation=screen.orientation as ScreenOrientation & {lock?:(orientation:string)=>Promise<void>};void orientation?.lock?.('landscape').catch(()=>{});}});
 const scene=new THREE.Scene();scene.background=null;scene.fog=new THREE.Fog(0x8bc9e5,600,1200);
-const camera=new THREE.PerspectiveCamera(66,innerWidth/innerHeight,.5,1500);
+const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.5,1500);
 const renderer=new THREE.WebGLRenderer({antialias:false,alpha:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.3));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.35;root.prepend(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xd7f5ff,0x4b7894,2.5));const sun=new THREE.DirectionalLight(0xffe5b1,3);sun.position.set(-100,180,-160);scene.add(sun);
@@ -56,19 +56,34 @@ const fireButton=document.querySelector<HTMLButtonElement>('#fire')!;fireButton.
 document.querySelector('#quality')!.addEventListener('click',()=>{ultra=!ultra;renderer.setPixelRatio(Math.min(devicePixelRatio,ultra?1.8:1.2));ocean.setQuality(ultra);document.querySelector('#quality')!.textContent=ultra?'Ultra':'Padrão';});
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 const clock=new THREE.Clock(),desired=new THREE.Vector3(),forward=new THREE.Vector3(),behind=new THREE.Vector3();
+let orbitYaw=0,orbitPointer:number|null=null,orbitLastX=0;
+renderer.domElement.style.touchAction='none';
+renderer.domElement.addEventListener('pointerdown',e=>{
+ if(orbitPointer!==null||(e.pointerType==='mouse'&&e.button!==0))return;
+ orbitPointer=e.pointerId;orbitLastX=e.clientX;
+ renderer.domElement.setPointerCapture(e.pointerId);
+});
+renderer.domElement.addEventListener('pointermove',e=>{
+ if(e.pointerId!==orbitPointer)return;
+ const dx=e.clientX-orbitLastX;orbitLastX=e.clientX;
+ orbitYaw+=dx*.0075;
+});
+function releaseOrbit(e:PointerEvent){if(e.pointerId===orbitPointer)orbitPointer=null;}
+renderer.domElement.addEventListener('pointerup',releaseOrbit);
+renderer.domElement.addEventListener('pointercancel',releaseOrbit);
+renderer.domElement.addEventListener('lostpointercapture',releaseOrbit);
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05),time=clock.elapsedTime;
 const t=keys.has('w')||keys.has('arrowup')?1:keys.has('s')||keys.has('arrowdown')?-1:throttle;
 const s=keys.has('a')||keys.has('arrowleft')?-1:keys.has('d')||keys.has('arrowright')?1:steer;
 ship.update(dt,t,s,time);wake.update(dt,ship.group.position,ship.heading,ship.speed);for(let i=0;i<enemies.length;i++){const enemy=enemies[i];if(!enemy.group.visible)continue;enemy.update(dt,.22,Math.sin(time*.25+i)*.25,time+i);}
 ocean.update(time,ship.group.position);combat.update(dt);for(const {vessel,shadow} of contactShadows){shadow.visible=vessel.group.visible;shadow.position.x=vessel.group.position.x;shadow.position.z=vessel.group.position.z;shadow.rotation.z=-vessel.heading;}
-forward.set(-Math.sin(ship.heading),0,-Math.cos(ship.heading));
-behind.set(0,12,33).applyAxisAngle(new THREE.Vector3(0,1,0),ship.heading);
-desired.copy(ship.group.position).add(behind);
-camera.position.lerp(desired,1-Math.exp(-3.1*dt));
-camera.lookAt(ship.group.position.x+forward.x*145,5.5,ship.group.position.z+forward.z*145);
+// Semnome camera rig: independent orbit, stable horizon, distant focal point.
+camera.position.set(ship.group.position.x+Math.sin(orbitYaw)*29,16,ship.group.position.z+Math.cos(orbitYaw)*29);
+desired.set(ship.group.position.x-Math.sin(orbitYaw)*44,4,ship.group.position.z-Math.cos(orbitYaw)*44);
+camera.lookAt(desired);
 if(tqOcean){
- const dx=camera.position.x-ship.group.position.x,dz=camera.position.z-ship.group.position.z,dy=camera.position.y-5.5;
- tqOcean.perspective={enabled:true,yaw:Math.atan2(-dx,dz),pitch:Math.atan2(dy,Math.hypot(dx,dz)),distance:Math.hypot(dx,dz,dy)};
+ const dx=camera.position.x-ship.group.position.x,dz=camera.position.z-ship.group.position.z,dy=camera.position.y;
+ tqOcean.perspective={enabled:true,yaw:orbitYaw,pitch:Math.atan2(dy,Math.hypot(dx,dz)),distance:Math.hypot(dx,dz,dy)};
  tqOcean.render({time:time*1000,camera:{x:ship.group.position.x,y:ship.group.position.z},zoom:1,ocean:{tileSize:590,speed:28,swell:35,brightness:100,saturation:110,contrast:105,distortion:18,waveMix:36,foamMix:24,sparkleIntensity:15},width:innerWidth,height:innerHeight});
 }
 const bearing=(v:THREE.Vector3)=>Math.atan2(camera.position.x-v.x,camera.position.z-v.z);
