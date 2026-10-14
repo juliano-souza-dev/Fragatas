@@ -22,7 +22,7 @@ export class SpriteVisual{
   this.ctx=this.canvas.getContext('2d')!;
   this.texture=new THREE.CanvasTexture(this.canvas);this.texture.colorSpace=THREE.SRGBColorSpace;
   const material=new THREE.SpriteMaterial({map:this.texture,transparent:true,depthWrite:false,alphaTest:.025});
-  this.sprite=new THREE.Sprite(material);this.sprite.position.set(0,10.5,0);this.sprite.scale.set(24,24,1);this.sprite.visible=false;group.add(this.sprite);
+  this.sprite=new THREE.Sprite(material);this.sprite.position.set(0,10.5,0);this.sprite.scale.set(27,27,1);this.sprite.visible=false;group.add(this.sprite);
   const original=group.children.find(child=>child!==this.sprite);
   loadImage().then(image=>{this.image=image;this.lastFrame=-1;this.update(0,0);this.sprite.visible=true;if(original)original.visible=false;}).catch(error=>console.error('[Fragatas] Falha no sprite:',error));
  }
