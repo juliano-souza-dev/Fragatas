@@ -25,7 +25,7 @@ async function enterGame(){
 document.querySelector('#play')!.addEventListener('click',()=>{void enterGame();});
 document.addEventListener('fullscreenchange',()=>{if(document.fullscreenElement){const orientation=screen.orientation as ScreenOrientation & {lock?:(orientation:string)=>Promise<void>};void orientation?.lock?.('landscape').catch(()=>{});}});
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x8bc9e5);scene.fog=new THREE.Fog(0x8bc9e5,600,1200);
-const viewHeight=155;
+const viewHeight=78;
 const camera=new THREE.OrthographicCamera(-viewHeight*innerWidth/innerHeight/2,viewHeight*innerWidth/innerHeight/2,viewHeight/2,-viewHeight/2,.5,1500);
 const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.3));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.35;root.prepend(renderer.domElement);
@@ -48,7 +48,7 @@ const t=keys.has('w')||keys.has('arrowup')?1:keys.has('s')||keys.has('arrowdown'
 const s=keys.has('a')||keys.has('arrowleft')?-1:keys.has('d')||keys.has('arrowright')?1:steer;
 ship.update(dt,t,s,time);for(let i=0;i<enemies.length;i++){const enemy=enemies[i];if(!enemy.group.visible)continue;enemy.update(dt,.22,Math.sin(time*.25+i)*.25,time+i);}
 ocean.update(time,ship.group.position);combat.update(dt);
-forward.set(-Math.sin(ship.heading),0,-Math.cos(ship.heading));behind.set(0,110,75).applyAxisAngle(new THREE.Vector3(0,1,0),ship.heading);desired.copy(ship.group.position).add(behind);camera.position.lerp(desired,1-Math.exp(-2.7*dt));camera.lookAt(ship.group.position.x+forward.x*16,0,ship.group.position.z+forward.z*16);
+forward.set(-Math.sin(ship.heading),0,-Math.cos(ship.heading));behind.set(0,85,64).applyAxisAngle(new THREE.Vector3(0,1,0),ship.heading);desired.copy(ship.group.position).add(behind);camera.position.lerp(desired,1-Math.exp(-2.7*dt));camera.lookAt(ship.group.position.x+forward.x*8,0,ship.group.position.z+forward.z*8);
 const bearing=(v:THREE.Vector3)=>Math.atan2(camera.position.x-v.x,camera.position.z-v.z);
 playerVisual.update(ship.heading,bearing(ship.group.position));
 for(let i=0;i<enemies.length;i++)enemyVisuals[i].update(enemies[i].heading,bearing(enemies[i].group.position));
