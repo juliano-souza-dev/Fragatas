@@ -47,8 +47,11 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
 const t=keys.has('w')||keys.has('arrowup')?1:keys.has('s')||keys.has('arrowdown')?-1:throttle;
 const s=keys.has('a')||keys.has('arrowleft')?-1:keys.has('d')||keys.has('arrowright')?1:steer;
 ship.update(dt,t,s,time);for(let i=0;i<enemies.length;i++){const enemy=enemies[i];if(!enemy.group.visible)continue;enemy.update(dt,.22,Math.sin(time*.25+i)*.25,time+i);}
-ocean.update(time,ship.group.position);combat.update(dt);playerVisual.update(ship.heading,ship.heading);for(let i=0;i<enemies.length;i++)enemyVisuals[i].update(enemies[i].heading,ship.heading);
+ocean.update(time,ship.group.position);combat.update(dt);
 forward.set(-Math.sin(ship.heading),0,-Math.cos(ship.heading));behind.set(0,110,75).applyAxisAngle(new THREE.Vector3(0,1,0),ship.heading);desired.copy(ship.group.position).add(behind);camera.position.lerp(desired,1-Math.exp(-2.7*dt));camera.lookAt(ship.group.position.x+forward.x*16,0,ship.group.position.z+forward.z*16);
+const bearing=(v:THREE.Vector3)=>Math.atan2(camera.position.x-v.x,camera.position.z-v.z);
+playerVisual.update(ship.heading,bearing(ship.group.position));
+for(let i=0;i<enemies.length;i++)enemyVisuals[i].update(enemies[i].heading,bearing(enemies[i].group.position));
 document.querySelector('#speed')!.textContent=String(Math.round(Math.abs(ship.speed)*2.2));document.querySelector('#heading')!.textContent=['N','NE','L','SE','S','SO','O','NO'][Math.round(((ship.heading%(Math.PI*2)+Math.PI*2)%(Math.PI*2))/(Math.PI/4))%8];
 if((firing||keys.has(' '))&&time-lastShot>.9){lastShot=time;combat.fire(ship);}
 if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0)toast.classList.remove('show');}renderer.render(scene,camera);}
