@@ -35,6 +35,11 @@ const ship=new Ship();scene.add(ship.group);ship.group.position.set(0,0,35);cons
 const toast=document.querySelector<HTMLElement>('#toast')!;let toastTimer=0;function announce(message:string){toast.textContent=message;toast.classList.add('show');toastTimer=3;}
 const combat=new Combat(scene,()=>{document.querySelector('#kills')!.textContent=String(combat.kills);announce(combat.kills===3?'🏆 Vitória! Os mares estão livres!':'🎯 Corsário derrotado!');if(combat.kills===3)document.querySelector('#mission')!.innerHTML='MISSÃO CONCLUÍDA <b>🏆 Vitória naval!</b>';});
 const enemies:Ship[]=[];const enemyVisuals:SpriteVisual[]=[];for(let i=0;i<3;i++){const enemy=new Ship(0x9e4542);enemy.group.position.set((i-1)*32,0,-20-i*27);enemy.heading=Math.PI*.5;scene.add(enemy.group);combat.addTarget(enemy);enemies.push(enemy);enemyVisuals.push(new SpriteVisual(enemy.group));}
+const contactShadows=[ship,...enemies].map(vessel=>{
+ const shadow=new THREE.Mesh(new THREE.CircleGeometry(7,24),new THREE.MeshBasicMaterial({color:0x052635,transparent:true,opacity:.35,depthWrite:false}));
+ shadow.rotation.x=-Math.PI/2;shadow.scale.set(.65,1.4,1);shadow.position.y=.25;scene.add(shadow);
+ return {vessel,shadow};
+});
 let throttle=0,steer=0,firing=false,ultra=false,lastShot=0;const stick=document.querySelector<HTMLElement>('#stick')!,knob=document.querySelector<HTMLElement>('#knob')!;
 function moveStick(e:PointerEvent){const b=stick.getBoundingClientRect();let x=(e.clientX-b.left-b.width/2)/(b.width/2),y=(e.clientY-b.top-b.height/2)/(b.height/2);const length=Math.max(1,Math.hypot(x,y));x/=length;y/=length;steer=x;throttle=-y;knob.style.transform=`translate(${x*38}px,${y*38}px)`;}
 stick.addEventListener('pointerdown',e=>{stick.setPointerCapture(e.pointerId);moveStick(e);});stick.addEventListener('pointermove',e=>{if(stick.hasPointerCapture(e.pointerId))moveStick(e);});const reset=()=>{steer=0;throttle=0;knob.style.transform='';};stick.addEventListener('pointerup',reset);stick.addEventListener('pointercancel',reset);
@@ -47,7 +52,7 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
 const t=keys.has('w')||keys.has('arrowup')?1:keys.has('s')||keys.has('arrowdown')?-1:throttle;
 const s=keys.has('a')||keys.has('arrowleft')?-1:keys.has('d')||keys.has('arrowright')?1:steer;
 ship.update(dt,t,s,time);for(let i=0;i<enemies.length;i++){const enemy=enemies[i];if(!enemy.group.visible)continue;enemy.update(dt,.22,Math.sin(time*.25+i)*.25,time+i);}
-ocean.update(time,ship.group.position);combat.update(dt);
+ocean.update(time,ship.group.position);combat.update(dt);for(const {vessel,shadow} of contactShadows){shadow.visible=vessel.group.visible;shadow.position.x=vessel.group.position.x;shadow.position.z=vessel.group.position.z;shadow.rotation.z=-vessel.heading;}
 forward.set(-Math.sin(ship.heading),0,-Math.cos(ship.heading));behind.set(0,85,64).applyAxisAngle(new THREE.Vector3(0,1,0),ship.heading);desired.copy(ship.group.position).add(behind);camera.position.lerp(desired,1-Math.exp(-2.7*dt));camera.lookAt(ship.group.position.x+forward.x*8,0,ship.group.position.z+forward.z*8);
 const bearing=(v:THREE.Vector3)=>Math.atan2(camera.position.x-v.x,camera.position.z-v.z);
 playerVisual.update(ship.heading,bearing(ship.group.position));
