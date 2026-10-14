@@ -18,6 +18,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Import mapped galleon sprite from TQ
+        run: |
+          mkdir -p public/assets/ships
+          curl --fail --location --retry 3 --output public/assets/ships/starter-galleon.png 'https://raw.githubusercontent.com/juliano-souza-dev/TQ/main/assets/ships/Sprite%20Sheet%20de%20Gale%C3%B5es%20Piratas%20em%20Fundo%20Transparente%20%282%29.png'
       - run: npm install
       - run: npm run build
       - uses: actions/configure-pages@v5
