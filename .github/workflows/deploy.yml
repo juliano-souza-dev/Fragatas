@@ -28,6 +28,11 @@ jobs:
           for asset in ilha_estaleiro.webp ilha_missoes.webp ilha_fundo_transparente.png; do
             curl --fail --location --retry 3 --output "public/assets/islands/$asset" "https://raw.githubusercontent.com/juliano-souza-dev/TQ/main/assets/regions/islands/$asset"
           done
+      - name: Import original TQ WebGL2 ocean renderer and texture
+        run: |
+          mkdir -p public/tq-renderer public/assets/ocean
+          curl --fail --location --retry 3 -o public/tq-renderer/LegacyOceanWebGLRenderer.mjs 'https://raw.githubusercontent.com/juliano-souza-dev/TQ/main/src/rendering/LegacyOceanWebGLRenderer.mjs'
+          curl --fail --location --retry 3 -o public/assets/ocean/tile.webp 'https://raw.githubusercontent.com/juliano-souza-dev/TQ/main/assets/globals/ocean-tile-tabuada-region01.webp'
       - run: npm install
       - run: npm run build
       - uses: actions/configure-pages@v5
