@@ -25,7 +25,7 @@ async function enterGame(){
 document.querySelector('#play')!.addEventListener('click',()=>{void enterGame();});
 document.addEventListener('fullscreenchange',()=>{if(document.fullscreenElement){const orientation=screen.orientation as ScreenOrientation & {lock?:(orientation:string)=>Promise<void>};void orientation?.lock?.('landscape').catch(()=>{});}});
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x8bc9e5);scene.fog=new THREE.Fog(0x8bc9e5,250,900);
-const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.5,1500);
+const camera=new THREE.PerspectiveCamera(43,innerWidth/innerHeight,.5,1500);
 const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.3));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.35;root.prepend(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xd7f5ff,0x4b7894,2.5));const sun=new THREE.DirectionalLight(0xffe5b1,3);sun.position.set(-100,180,-160);scene.add(sun);
@@ -33,7 +33,7 @@ const ocean=new Ocean();scene.add(ocean.mesh);const islands=new Islands();scene.
 const ship=new Ship();scene.add(ship.group);ship.group.position.set(0,0,35);const playerVisual=new SpriteVisual(ship.group);
 const toast=document.querySelector<HTMLElement>('#toast')!;let toastTimer=0;function announce(message:string){toast.textContent=message;toast.classList.add('show');toastTimer=3;}
 const combat=new Combat(scene,()=>{document.querySelector('#kills')!.textContent=String(combat.kills);announce(combat.kills===3?'🏆 Vitória! Os mares estão livres!':'🎯 Corsário derrotado!');if(combat.kills===3)document.querySelector('#mission')!.innerHTML='MISSÃO CONCLUÍDA <b>🏆 Vitória naval!</b>';});
-const enemies:Ship[]=[];const enemyVisuals:SpriteVisual[]=[];for(let i=0;i<3;i++){const enemy=new Ship(0x9e4542);enemy.group.position.set((i-1)*38,0,-100-i*48);enemy.heading=Math.PI*.5;scene.add(enemy.group);combat.addTarget(enemy);enemies.push(enemy);enemyVisuals.push(new SpriteVisual(enemy.group));}
+const enemies:Ship[]=[];const enemyVisuals:SpriteVisual[]=[];for(let i=0;i<3;i++){const enemy=new Ship(0x9e4542);enemy.group.position.set((i-1)*32,0,-20-i*27);enemy.heading=Math.PI*.5;scene.add(enemy.group);combat.addTarget(enemy);enemies.push(enemy);enemyVisuals.push(new SpriteVisual(enemy.group));}
 let throttle=0,steer=0,firing=false,ultra=false,lastShot=0;const stick=document.querySelector<HTMLElement>('#stick')!,knob=document.querySelector<HTMLElement>('#knob')!;
 function moveStick(e:PointerEvent){const b=stick.getBoundingClientRect();let x=(e.clientX-b.left-b.width/2)/(b.width/2),y=(e.clientY-b.top-b.height/2)/(b.height/2);const length=Math.max(1,Math.hypot(x,y));x/=length;y/=length;steer=x;throttle=-y;knob.style.transform=`translate(${x*38}px,${y*38}px)`;}
 stick.addEventListener('pointerdown',e=>{stick.setPointerCapture(e.pointerId);moveStick(e);});stick.addEventListener('pointermove',e=>{if(stick.hasPointerCapture(e.pointerId))moveStick(e);});const reset=()=>{steer=0;throttle=0;knob.style.transform='';};stick.addEventListener('pointerup',reset);stick.addEventListener('pointercancel',reset);
@@ -47,7 +47,7 @@ const t=keys.has('w')||keys.has('arrowup')?1:keys.has('s')||keys.has('arrowdown'
 const s=keys.has('a')||keys.has('arrowleft')?-1:keys.has('d')||keys.has('arrowright')?1:steer;
 ship.update(dt,t,s,time);for(let i=0;i<enemies.length;i++){const enemy=enemies[i];if(!enemy.group.visible)continue;enemy.update(dt,.22,Math.sin(time*.25+i)*.25,time+i);}
 ocean.update(time,ship.group.position);combat.update(dt);playerVisual.update(ship.heading,ship.heading);for(let i=0;i<enemies.length;i++)enemyVisuals[i].update(enemies[i].heading,ship.heading);
-forward.set(-Math.sin(ship.heading),0,-Math.cos(ship.heading));behind.set(0,27,53).applyAxisAngle(new THREE.Vector3(0,1,0),ship.heading);desired.copy(ship.group.position).add(behind);camera.position.lerp(desired,1-Math.exp(-2.7*dt));camera.lookAt(ship.group.position.x+forward.x*25,5,ship.group.position.z+forward.z*25);
+forward.set(-Math.sin(ship.heading),0,-Math.cos(ship.heading));behind.set(0,92,76).applyAxisAngle(new THREE.Vector3(0,1,0),ship.heading);desired.copy(ship.group.position).add(behind);camera.position.lerp(desired,1-Math.exp(-2.7*dt));camera.lookAt(ship.group.position.x+forward.x*12,0,ship.group.position.z+forward.z*12);
 document.querySelector('#speed')!.textContent=String(Math.round(Math.abs(ship.speed)*2.2));document.querySelector('#heading')!.textContent=['N','NE','L','SE','S','SO','O','NO'][Math.round(((ship.heading%(Math.PI*2)+Math.PI*2)%(Math.PI*2))/(Math.PI/4))%8];
 if((firing||keys.has(' '))&&time-lastShot>.9){lastShot=time;combat.fire(ship);}
 if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0)toast.classList.remove('show');}renderer.render(scene,camera);}
