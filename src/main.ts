@@ -10,11 +10,20 @@ root.innerHTML=`<div id="hud"><div class="brand">⚓ FRAGATAS <small>Águas Livr
 const entry=document.createElement('div');entry.id='entry';entry.innerHTML='<div class="entry-panel"><h1>⚓ FRAGATAS</h1><p>Experiência em tela cheia e paisagem</p><button id="play">▶ JOGAR</button><small id="entry-note">Toque para iniciar</small></div>';root.append(entry);
 async function enterGame(){
  const note=document.querySelector<HTMLElement>('#entry-note')!;
- try{if(!document.fullscreenElement && document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen({navigationUI:'hide'});}catch{note.textContent='Tela cheia indisponível neste navegador';}
- try{const orientation=screen.orientation as ScreenOrientation & {lock?:(orientation:string)=>Promise<void>};if(orientation.lock)await orientation.lock('landscape');}catch{note.textContent='Gire o celular para paisagem se necessário';}
+ const orientation=screen.orientation as ScreenOrientation & {lock?:(orientation:string)=>Promise<void>};
+ const tryLock=async()=>{try{if(orientation?.lock)await orientation.lock('landscape');}catch{note.textContent='Gire o celular para paisagem se necessário';}};
+ try{
+  if(!document.fullscreenElement && document.documentElement.requestFullscreen){
+   const pending=document.documentElement.requestFullscreen({navigationUI:'hide'});
+   void tryLock();
+   await pending;
+   await tryLock();
+  }else await tryLock();
+ }catch(error){console.warn('[Fragatas] Fullscreen indisponível:',error);await tryLock();}
  entry.remove();
 }
 document.querySelector('#play')!.addEventListener('click',()=>{void enterGame();});
+document.addEventListener('fullscreenchange',()=>{if(document.fullscreenElement){const orientation=screen.orientation as ScreenOrientation & {lock?:(orientation:string)=>Promise<void>};void orientation?.lock?.('landscape').catch(()=>{});}});
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x8bc9e5);scene.fog=new THREE.Fog(0x8bc9e5,250,900);
 const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.5,1500);
 const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});
