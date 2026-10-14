@@ -32,7 +32,7 @@ scene.add(new THREE.HemisphereLight(0xd7f5ff,0x4b7894,2.5));const sun=new THREE.
 const ocean=new Ocean();
 const waterCanvas=document.createElement('canvas');waterCanvas.id='webgl-ocean';root.prepend(waterCanvas);
 let tqOcean:any=null;
-void import(/* @vite-ignore */ '/Fragatas/tq-renderer/LegacyOceanWebGLRenderer.mjs').then(async module=>{
+void import(/* @vite-ignore */ (new URL('tq-renderer/LegacyOceanWebGLRenderer.mjs',window.location.origin+'/Fragatas/').href)).then(async module=>{
  tqOcean=new module.OceanWebGLRenderer(waterCanvas);
  const ready=await tqOcean.init('/Fragatas/assets/ocean/tile.webp');
  if(!ready){tqOcean=null;scene.add(ocean.mesh);}
