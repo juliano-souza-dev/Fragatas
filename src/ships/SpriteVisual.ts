@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 const order=[4,5,6,7,8,9,10,11,12,13,14,15,0,1,2,3];
-const sheet=import.meta.env.BASE_URL+'assets/ships/starter-galleon.png';
+const sheet='/Fragatas/assets/ships/starter-galleon.png';
 const base=new THREE.TextureLoader().load(sheet);
 base.colorSpace=THREE.SRGBColorSpace;
 export class SpriteVisual{
