@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import './style.css';
 import {Ocean} from './world/Ocean';
+import {ShipWake} from './world/ShipWake';
 import {Ship} from './ships/Ship';
 import {Islands} from './world/Islands';
 import {Combat} from './combat/Combat';
@@ -37,6 +38,7 @@ void import(/* @vite-ignore */ (new URL('tq-renderer/LegacyOceanWebGLRenderer.mj
  const ready=await tqOcean.init('/Fragatas/assets/ocean/tile.webp');
  if(!ready){tqOcean=null;scene.add(ocean.mesh);}
 }).catch(error=>{console.error('[Fragatas] TQ WebGL2 ocean:',error);scene.add(ocean.mesh);});const islands=new Islands();scene.add(islands.group);
+const wake=new ShipWake(scene);
 const ship=new Ship();scene.add(ship.group);ship.group.position.set(0,0,35);const playerVisual=new SpriteVisual(ship.group);
 const toast=document.querySelector<HTMLElement>('#toast')!;let toastTimer=0;function announce(message:string){toast.textContent=message;toast.classList.add('show');toastTimer=3;}
 const combat=new Combat(scene,()=>{document.querySelector('#kills')!.textContent=String(combat.kills);announce(combat.kills===3?'🏆 Vitória! Os mares estão livres!':'🎯 Corsário derrotado!');if(combat.kills===3)document.querySelector('#mission')!.innerHTML='MISSÃO CONCLUÍDA <b>🏆 Vitória naval!</b>';});
@@ -57,7 +59,7 @@ const clock=new THREE.Clock(),desired=new THREE.Vector3(),forward=new THREE.Vect
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05),time=clock.elapsedTime;
 const t=keys.has('w')||keys.has('arrowup')?1:keys.has('s')||keys.has('arrowdown')?-1:throttle;
 const s=keys.has('a')||keys.has('arrowleft')?-1:keys.has('d')||keys.has('arrowright')?1:steer;
-ship.update(dt,t,s,time);for(let i=0;i<enemies.length;i++){const enemy=enemies[i];if(!enemy.group.visible)continue;enemy.update(dt,.22,Math.sin(time*.25+i)*.25,time+i);}
+ship.update(dt,t,s,time);wake.update(dt,ship.group.position,ship.heading,ship.speed);for(let i=0;i<enemies.length;i++){const enemy=enemies[i];if(!enemy.group.visible)continue;enemy.update(dt,.22,Math.sin(time*.25+i)*.25,time+i);}
 ocean.update(time,ship.group.position);if(tqOcean){const dx=camera.position.x-ship.group.position.x,dz=camera.position.z-ship.group.position.z,dy=camera.position.y;const distance=Math.hypot(dx,dz,dy);tqOcean.perspective={enabled:true,yaw:Math.atan2(-dx,dz),pitch:Math.atan2(dy,Math.hypot(dx,dz)),distance};tqOcean.render({time:time*1000,camera:{x:ship.group.position.x,y:ship.group.position.z},zoom:1,ocean:{tileSize:590,speed:28,swell:35,brightness:100,saturation:110,contrast:105,distortion:18,waveMix:36,foamMix:24,sparkleIntensity:15},width:innerWidth,height:innerHeight});}combat.update(dt);for(const {vessel,shadow} of contactShadows){shadow.visible=vessel.group.visible;shadow.position.x=vessel.group.position.x;shadow.position.z=vessel.group.position.z;shadow.rotation.z=-vessel.heading;}
 forward.set(-Math.sin(ship.heading),0,-Math.cos(ship.heading));behind.set(0,45,63).applyAxisAngle(new THREE.Vector3(0,1,0),ship.heading);desired.copy(ship.group.position).add(behind);camera.position.lerp(desired,1-Math.exp(-2.7*dt));camera.lookAt(ship.group.position.x+forward.x*25,0,ship.group.position.z+forward.z*25);
 const bearing=(v:THREE.Vector3)=>Math.atan2(camera.position.x-v.x,camera.position.z-v.z);
