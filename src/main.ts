@@ -7,6 +7,14 @@ import {Combat} from './combat/Combat';
 import {SpriteVisual} from './ships/SpriteVisual';
 const root=document.querySelector<HTMLDivElement>('#app')!;
 root.innerHTML=`<div id="hud"><div class="brand">⚓ FRAGATAS <small>Águas Livres</small></div><div class="stats"><span>❤️ <b id="hp">100</b></span><span>🧭 <b id="heading">N</b></span><span>⛵ <b id="speed">0</b> nós</span><span>🎯 <b id="kills">0</b>/3</span></div><button id="quality">Padrão</button></div><div id="mission">MISSÃO 01 <b>Derrote os 3 corsários</b></div><div id="rotate">Gire o celular para paisagem ↻</div><div id="controls"><div id="stick"><div id="knob"></div></div><div class="actions"><button id="fire">💥<small>CANHÕES</small></button></div></div><div id="toast"></div>`;
+const entry=document.createElement('div');entry.id='entry';entry.innerHTML='<div class="entry-panel"><h1>⚓ FRAGATAS</h1><p>Experiência em tela cheia e paisagem</p><button id="play">▶ JOGAR</button><small id="entry-note">Toque para iniciar</small></div>';root.append(entry);
+async function enterGame(){
+ const note=document.querySelector<HTMLElement>('#entry-note')!;
+ try{if(!document.fullscreenElement && document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen({navigationUI:'hide'});}catch{note.textContent='Tela cheia indisponível neste navegador';}
+ try{const orientation=screen.orientation as ScreenOrientation & {lock?:(orientation:string)=>Promise<void>};if(orientation.lock)await orientation.lock('landscape');}catch{note.textContent='Gire o celular para paisagem se necessário';}
+ entry.remove();
+}
+document.querySelector('#play')!.addEventListener('click',()=>{void enterGame();});
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x8bc9e5);scene.fog=new THREE.Fog(0x8bc9e5,250,900);
 const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.5,1500);
 const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});
