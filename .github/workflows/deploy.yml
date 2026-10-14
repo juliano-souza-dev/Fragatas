@@ -33,6 +33,9 @@ jobs:
           mkdir -p public/tq-renderer public/assets/ocean
           curl --fail --location --retry 3 -o public/tq-renderer/LegacyOceanWebGLRenderer.mjs 'https://raw.githubusercontent.com/juliano-souza-dev/TQ/main/src/rendering/LegacyOceanWebGLRenderer.mjs'
           curl --fail --location --retry 3 -o public/assets/ocean/tile.webp 'https://raw.githubusercontent.com/juliano-souza-dev/TQ/main/assets/globals/ocean-tile-tabuada-region01.webp'
+      - name: Stamp each deployment with its Git commit
+        run: |
+          printf '{"version":"%s"}\n' "$GITHUB_SHA" > public/version.json
       - run: npm install
       - run: npm run build
       - uses: actions/configure-pages@v5
