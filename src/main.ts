@@ -6,6 +6,7 @@ import {Ship} from './ships/Ship';
 import {Islands} from './world/Islands';
 import {Combat} from './combat/Combat';
 import {SpriteVisual} from './ships/SpriteVisual';
+const assetVersion=new URLSearchParams(location.search).get('v')||String(Date.now());
 const root=document.querySelector<HTMLDivElement>('#app')!;
 root.innerHTML=`<div id="hud"><div class="brand">⚓ FRAGATAS <small>Águas Livres</small></div><div class="stats"><span>❤️ <b id="hp">100</b></span><span>🧭 <b id="heading">N</b></span><span>⛵ <b id="speed">0</b> nós</span><span>🎯 <b id="kills">0</b>/3</span></div><button id="quality">Padrão</button></div><div id="mission">MISSÃO 01 <b>Derrote os 3 corsários</b></div><div id="rotate">Gire o celular para paisagem ↻</div><div id="controls"><div id="stick"><div id="knob"></div></div><div class="actions"><button id="fire">💥<small>CANHÕES</small></button></div></div><div id="toast"></div>`;
 const entry=document.createElement('div');entry.id='entry';entry.innerHTML='<div class="entry-panel"><h1>⚓ FRAGATAS</h1><p>Experiência em tela cheia e paisagem</p><button id="play">▶ JOGAR</button><small id="entry-note">Toque para iniciar</small></div>';root.append(entry);
@@ -33,9 +34,9 @@ scene.add(new THREE.HemisphereLight(0xd7f5ff,0x4b7894,2.5));const sun=new THREE.
 const ocean=new Ocean();
 const waterCanvas=document.createElement('canvas');waterCanvas.id='webgl-ocean';root.prepend(waterCanvas);
 let tqOcean:any=null;
-void import(/* @vite-ignore */ (new URL('tq-renderer/LegacyOceanWebGLRenderer.mjs',window.location.origin+'/Fragatas/').href)).then(async module=>{
+void import(/* @vite-ignore */ (new URL('tq-renderer/LegacyOceanWebGLRenderer.mjs?v='+assetVersion,window.location.origin+'/Fragatas/').href)).then(async module=>{
  tqOcean=new module.OceanWebGLRenderer(waterCanvas);
- const ready=await tqOcean.init('/Fragatas/assets/ocean/tile.webp');
+ const ready=await tqOcean.init('/Fragatas/assets/ocean/tile.webp?v='+assetVersion);
  if(!ready){tqOcean=null;scene.add(ocean.mesh);}
 }).catch(error=>{console.error('[Fragatas] TQ WebGL2 ocean:',error);scene.add(ocean.mesh);});const islands=new Islands();scene.add(islands.group);
 const wake=new ShipWake(scene);
